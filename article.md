@@ -1,48 +1,28 @@
+---
+author: "Kyle Jones"
+date_published: "October 10, 2025"
+date_exported_from_medium: "November 10, 2025"
+canonical_link: "https://medium.com/@kyle-t-jones/electric-load-forecasting-with-machine-learning-68d7bef4f641"
+---
+
 # Electric Load Forecasting with Machine Learning My family slept in the living room, by our natural gas fireplace during
 Winter Storm Uri in February 2021. Electricity demand surged to...
 
 ### Electric Load Forecasting with Machine Learning
-My family slept in the living room, by our natural gas fireplace during
-Winter Storm Uri in February 2021. Electricity demand surged to
-unprecedented levels while generation capacity plummeted. ERCOT, the
-grid balancing authority, struggled with load forecasts that failed to
-capture the extreme weather's compound effects on both demand and
-supply. Prices spiked to the regulatory cap of \$9,000 per
-megawatt-hour, rolling blackouts affected 4.5 million homes, and the
-economic damage exceeded \$200 billion. Yikes!
+My family slept in the living room, by our natural gas fireplace during Winter Storm Uri in February 2021. Electricity demand surged to unprecedented levels while generation capacity plummeted. ERCOT, the grid balancing authority, struggled with load forecasts that failed to capture the extreme weather's compound effects on both demand and supply. Prices spiked to the regulatory cap of \$9,000 per megawatt-hour, rolling blackouts affected 4.5 million homes, and the economic damage exceeded \$200 billion. Yikes!
 
-Modern load forecasting combines time-honored statistical methods with
-cutting-edge machine learning, leveraging massive public datasets that
-were unimaginable a decade ago. The EIA's Form 930 provides hourly
-balancing authority data. NOAA delivers weather forecasts with
-unprecedented accuracy. The EAGLE-I system tracks outages in near
-real-time. Together, these sources enable forecasting systems that
-outperform traditional approaches by 30--50% while using only publicly
-available data.
+Modern load forecasting combines time-honored statistical methods with cutting-edge machine learning, leveraging massive public datasets that were unimaginable a decade ago. The EIA's Form 930 provides hourly balancing authority data. NOAA delivers weather forecasts with unprecedented accuracy. The EAGLE-I system tracks outages in near real-time. Together, these sources enable forecasting systems that outperform traditional approaches by 30--50% while using only publicly available data.
 
-This project shows how to build a load forecasting system from scratch,
-using EIA generation data.
+This project shows how to build a load forecasting system from scratch, using EIA generation data.
 
 
 ### Why Public Data Changes Everything
-Traditionally, load forecasting required proprietary utility data: AMI
-readings, customer counts, historical billing records. This created a
-massive barrier to entry. Smaller utilities couldn't afford
-sophisticated models. Researchers couldn't validate methods across
-different regions. Market participants operated with incomplete
-information.
+Traditionally, load forecasting required proprietary utility data: AMI readings, customer counts, historical billing records. This created a massive barrier to entry. Smaller utilities couldn't afford sophisticated models. Researchers couldn't validate methods across different regions. Market participants operated with incomplete information.
 
-The EIA's decision to publish hourly balancing authority data in Form
-930 transformed this landscape. Now anyone can access the same
-foundational data that powers grid operations. Combined with NOAA
-weather data, Census demographics, and OpenStreetMap point-of-interest
-counts, you can build forecasting models that rival proprietary systems.
+The EIA's decision to publish hourly balancing authority data in Form 930 transformed this landscape. Now anyone can access the same foundational data that powers grid operations. Combined with NOAA weather data, Census demographics, and OpenStreetMap point-of-interest counts, you can build forecasting models that rival proprietary systems.
 
 ### The EIA Electricity Dataset
-The EIA publishes its entire electricity dataset as a massive csv
-file --- over 500,000 time series covering generation, consumption,
-prices, and infrastructure. I converted it to parquet to make it smaller
-and easier to workwith.
+The EIA publishes its entire electricity dataset as a massive csv file --- over 500,000 time series covering generation, consumption, prices, and infrastructure. I converted it to parquet to make it smaller and easier to workwith.
 
 ```python
 import pandas as pd
@@ -172,14 +152,11 @@ if results:
     print(f"Date range: {series_data['dates'][0]} to {series_data['dates'][-1]}")
 ```
 
-We can query the EIA dataset locally. Parquet is fast so search
-operations are pretty trivial even though the dataset is large.
+We can query the EIA dataset locally. Parquet is fast so search operations are pretty trivial even though the dataset is large.
 
 
 ### Feature Engineering: The Secret Sauce
-Machine learning models need features that capture patterns across
-multiple time scales and external factors. The feature engineering
-pipeline transforms simple load values into a rich feature set:
+Machine learning models need features that capture patterns across multiple time scales and external factors. The feature engineering pipeline transforms simple load values into a rich feature set:
 
 ```python
 import pandas as pd
@@ -250,20 +227,14 @@ print(f"Feature columns: {len(features_df.columns)}")
 print(f"\nNew features: {list(features_df.columns[3:])}")
 ```
 
-The feature engineering pipeline creates 20+ features from just three
-input columns. The lag features capture temporal dependencies. The
-cyclical encodings handle wraparound effects (hour 23 is close to hour
-0). The rolling statistics smooth out noise while preserving trends.
+The feature engineering pipeline creates 20+ features from just three input columns. The lag features capture temporal dependencies. The cyclical encodings handle wraparound effects (hour 23 is close to hour 0). The rolling statistics smooth out noise while preserving trends.
 
 
 ### Model Training: ARIMA Baseline and LightGBM Advanced
-Forecasting systems should uses multiple model tiers. The baseline
-handles all regions with minimal data requirements. The advanced model
-delivers superior accuracy when sufficient training data exists.
+Forecasting systems should uses multiple model tiers. The baseline handles all regions with minimal data requirements. The advanced model delivers superior accuracy when sufficient training data exists.
 
 ### Tier 1: Auto ARIMA Baseline
-ARIMA (AutoRegressive Integrated Moving Average) models have powered
-time series forecasting for decades. The `auto_arima` function automatically selects optimal parameters:
+ARIMA (AutoRegressive Integrated Moving Average) models have powered time series forecasting for decades. The `auto_arima` function automatically selects optimal parameters:
 
 ```python
 from pmdarima import auto_arima
@@ -340,14 +311,11 @@ sample_features = prepare_features(sample_data)
 model_uri = train_arima_model(sample_features, "CAL-ALL")
 ```
 
-The ARIMA model automatically detects seasonality (24-hour patterns),
-trends, and autocorrelation. It requires minimal feature engineering and
-trains quickly even on years of hourly data.
+The ARIMA model automatically detects seasonality (24-hour patterns), trends, and autocorrelation. It requires minimal feature engineering and trains quickly even on years of hourly data.
 
 
 ### Tier 2: LightGBM with Rich Features
-Gradient boosting models like LightGBM handle complex non-linear
-relationships and feature interactions that ARIMA cannot capture:
+Gradient boosting models like LightGBM handle complex non-linear relationships and feature interactions that ARIMA cannot capture:
 
 ```python
 from lightgbm import LGBMRegressor
@@ -450,14 +418,10 @@ def train_lightgbm_model(df: pd.DataFrame, ba: str) -> Optional[str]:
 model_uri_lgbm = train_lightgbm_model(sample_features, "CAL-ALL")
 ```
 
-LightGBM typically achieves 30--40% lower MAPE than ARIMA on regions
-with rich training data. The feature importance output reveals which
-factors drive load most strongly --- often lag features and temperature
-dominate.
+LightGBM typically achieves 30--40% lower MAPE than ARIMA on regions with rich training data. The feature importance output reveals which factors drive load most strongly --- often lag features and temperature dominate.
 
 ### Generating Forecasts: Multi-Horizon Predictions
-Once trained, models generate forecasts by iteratively predicting future
-hours and updating lag features:
+Once trained, models generate forecasts by iteratively predicting future hours and updating lag features:
 
 ```python
 def generate_forecast(model, df: pd.DataFrame, horizon_hours: int = 24) -> List[float]:
@@ -525,14 +489,10 @@ for i, forecast in enumerate(forecasts_48h):
     print(f"Hour {i+1}: {forecast:,.0f} MW")
 ```
 
-This recursive forecasting approach maintains temporal consistency. Each
-prediction incorporates the previous forecast through lag features,
-preventing discontinuities.
+This recursive forecasting approach maintains temporal consistency. Each prediction incorporates the previous forecast through lag features, preventing discontinuities.
 
 ### Scenario Planning: What-If Analysis
-Load forecasting isn't just about predicting the most likely
-future --- it's about exploring alternatives. Scenario planning adjusts
-input features to model different conditions:
+Load forecasting isn't just about predicting the most likely future --- it's about exploring alternatives. Scenario planning adjusts input features to model different conditions:
 
 ```python
 def _apply_hot_weather(df: pd.DataFrame) -> pd.DataFrame:
@@ -623,15 +583,10 @@ comparisons = [
 print('\n'.join(comparisons))
 ```
 
-Scenario planning enables grid operators to prepare for extremes. The
-"hot_weather" scenario models summer heat waves. The "demand_response"
-scenario quantifies the impact of conservation programs. The
-"major_outage" scenario tests recovery procedures.
+Scenario planning enables grid operators to prepare for extremes. The "hot_weather" scenario models summer heat waves. The "demand_response" scenario quantifies the impact of conservation programs. The "major_outage" scenario tests recovery procedures.
 
 ### Integration with Real-Time Outage Data
-Load forecasts gain additional accuracy by incorporating outage data
-from the EAGLE-I system, which tracks customer outages across the United
-States at county-level resolution:
+Load forecasts gain additional accuracy by incorporating outage data from the EAGLE-I system, which tracks customer outages across the United States at county-level resolution:
 
 ```python
 class OutageImpactAnalyzer:
@@ -709,56 +664,25 @@ class OutageImpactAnalyzer:
 # )
 ```
 
-During major storms or wildfire events, outage-adjusted forecasts
-provide critical situational awareness. Grid operators can distinguish
-between load dropping due to conservation versus load disappearing due
-to outages.
+During major storms or wildfire events, outage-adjusted forecasts provide critical situational awareness. Grid operators can distinguish between load dropping due to conservation versus load disappearing due to outages.
 
 ### Key Takeaways
-Building production load forecasting from public data delivers
-transformative capabilities:
+Building production load forecasting from public data delivers transformative capabilities:
 
-1\. Public Data Equals Private Power: The EIA parquet dataset, NOAA
-weather, and EAGLE-I outages provide everything needed for utility-grade
-forecasting. The data moat has evaporated.
+1\. Public Data Equals Private Power: The EIA parquet dataset, NOAA weather, and EAGLE-I outages provide everything needed for utility-grade forecasting. The data moat has evaporated.
 
-2\. Feature Engineering Outweighs Model Complexity: Rich features (lags,
-rolling stats, cyclical encodings) matter more than algorithm choice.
-Even simple models perform well with great features.
+2\. Feature Engineering Outweighs Model Complexity: Rich features (lags, rolling stats, cyclical encodings) matter more than algorithm choice. Even simple models perform well with great features.
 
-3\. Multi-Tier Modeling Ensures Robustness: ARIMA handles data-scarce
-regions. LightGBM delivers maximum accuracy when data allows. Deploy
-both.
+3\. Multi-Tier Modeling Ensures Robustness: ARIMA handles data-scarce regions. LightGBM delivers maximum accuracy when data allows. Deploy both.
 
-4\. Scenario Planning Prepares for Extremes: Grid reliability depends on
-understanding tail risks. Weather extremes, demand response, and outage
-scenarios stress-test operations.
+4\. Scenario Planning Prepares for Extremes: Grid reliability depends on understanding tail risks. Weather extremes, demand response, and outage scenarios stress-test operations.
 
-5\. MLflow Makes Models Manageable: Track experiments, version models,
-manage deployment across 60+ balancing authorities. Production ML
-requires production tooling.
+5\. MLflow Makes Models Manageable: Track experiments, version models, manage deployment across 60+ balancing authorities. Production ML requires production tooling.
 
-6\. Integration Amplifies Value: Combining forecasts with transmission
-data, outage tracking, and weather creates a comprehensive grid
-intelligence platform.
+6\. Integration Amplifies Value: Combining forecasts with transmission data, outage tracking, and weather creates a comprehensive grid intelligence platform.
 
-This project uses data from EIA (generation data), NOAA (weather data),
-and EAGLE-I (outage data). Creating lag features is key to preparing the
-data for the ML model. ARIMA is a simple model that makes a good
-baseline. LightGBM models are useful for high-volume regions.
+This project uses data from EIA (generation data), NOAA (weather data), and EAGLE-I (outage data). Creating lag features is key to preparing the data for the ML model. ARIMA is a simple model that makes a good baseline. LightGBM models are useful for high-volume regions.
 
-MLflow makes it easy to log all your experiments and track performance
-metrics.
+MLflow makes it easy to log all your experiments and track performance metrics.
 
-The load forecasting system described here powers real-time grid
-operations. It handles 60+ balancing authorities, generates 24-hour and
-week-ahead forecasts, and supports scenario planning --- all from public
-data. The code examples provide production-ready implementations you can
-deploy immediately.
-::::::::By [Kyle Jones](https://medium.com/@kyle-t-jones) on
-[October 10, 2025](https://medium.com/p/68d7bef4f641).
-
-[Canonical
-link](https://medium.com/@kyle-t-jones/electric-load-forecasting-with-machine-learning-68d7bef4f641)
-
-Exported from [Medium](https://medium.com) on November 10, 2025.
+The load forecasting system described here powers real-time grid operations. It handles 60+ balancing authorities, generates 24-hour and week-ahead forecasts, and supports scenario planning --- all from public data. The code examples provide production-ready implementations you can deploy immediately.
