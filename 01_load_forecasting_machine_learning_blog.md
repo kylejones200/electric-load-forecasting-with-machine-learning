@@ -311,37 +311,37 @@ During major storms or wildfire events, outage-adjusted forecasts provide critic
 
 Building production load forecasting from public data delivers transformative capabilities:
 
-**1. Public Data Equals Private Power**: The EIA parquet dataset, NOAA weather, and EAGLE-I outages provide everything needed for utility-grade forecasting. The data moat has evaporated.
+1. Public Data Equals Private Power: The EIA parquet dataset, NOAA weather, and EAGLE-I outages provide everything needed for utility-grade forecasting. The data moat has evaporated.
 
-**2. Feature Engineering Outweighs Model Complexity**: Rich features (lags, rolling stats, cyclical encodings) matter more than algorithm choice. Even simple models perform well with great features.
+2. Feature Engineering Outweighs Model Complexity: Rich features (lags, rolling stats, cyclical encodings) matter more than algorithm choice. Even simple models perform well with great features.
 
-**3. Multi-Tier Modeling Ensures Robustness**: ARIMA handles data-scarce regions. LightGBM delivers maximum accuracy when data allows. Deploy both.
+3. Multi-Tier Modeling Ensures Robustness: ARIMA handles data-scarce regions. LightGBM delivers maximum accuracy when data allows. Deploy both.
 
-**4. Scenario Planning Prepares for Extremes**: Grid reliability depends on understanding tail risks. Weather extremes, demand response, and outage scenarios stress-test operations.
+4. Scenario Planning Prepares for Extremes: Grid reliability depends on understanding tail risks. Weather extremes, demand response, and outage scenarios stress-test operations.
 
-**5. MLflow Makes Models Manageable**: Track experiments, version models, manage deployment across 60+ balancing authorities. Production ML requires production tooling.
+5. MLflow Makes Models Manageable: Track experiments, version models, manage deployment across 60+ balancing authorities. Production ML requires production tooling.
 
-**6. Integration Amplifies Value**: Combining forecasts with transmission data, outage tracking, and weather creates a comprehensive grid intelligence platform.
+6. Integration Amplifies Value: Combining forecasts with transmission data, outage tracking, and weather creates a comprehensive grid intelligence platform.
 
 ## Implementation Strategy
 
 Deploy this forecasting system in your environment:
 
-1. **Data Foundation**: Download EIA ELEC.parquet. Set up NOAA weather feed. Ingest EAGLE-I outage data.
+1. Data Foundation: Download EIA ELEC.parquet. Set up NOAA weather feed. Ingest EAGLE-I outage data.
 
-2. **Feature Pipeline**: Build feature engineering pipeline. Start with calendar and lag features. Add weather when available.
+2. Feature Pipeline: Build feature engineering pipeline. Start with calendar and lag features. Add weather when available.
 
-3. **Baseline Models**: Train ARIMA models for all balancing authorities. Establish performance baselines.
+3. Baseline Models: Train ARIMA models for all balancing authorities. Establish performance baselines.
 
-4. **Advanced Models**: Train LightGBM models for high-volume regions. Compare against ARIMA.
+4. Advanced Models: Train LightGBM models for high-volume regions. Compare against ARIMA.
 
-5. **MLflow Integration**: Log all experiments. Register champion models. Track performance metrics.
+5. MLflow Integration: Log all experiments. Register champion models. Track performance metrics.
 
-6. **Scenario Framework**: Implement scenario adjustments. Test weather extremes and demand response.
+6. Scenario Framework: Implement scenario adjustments. Test weather extremes and demand response.
 
-7. **API Layer**: Expose forecasts via REST API. Serve scenarios on demand. Cache results for performance.
+7. API Layer: Expose forecasts via REST API. Serve scenarios on demand. Cache results for performance.
 
-8. **Monitoring**: Track forecast errors daily. Detect model drift. Retrain quarterly or when errors spike.
+8. Monitoring: Track forecast errors daily. Detect model drift. Retrain quarterly or when errors spike.
 
 The load forecasting system described here powers real-time grid operations. It handles 60+ balancing authorities, generates 24-hour and week-ahead forecasts, and supports scenario planning—all from public data. The code examples provide example implementations.
 
