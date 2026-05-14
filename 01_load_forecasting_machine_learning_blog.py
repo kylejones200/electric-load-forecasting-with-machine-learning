@@ -90,7 +90,6 @@ if results:
     series_data = eia_service.get_time_series_data(results[0]['series_id'])
     logger.info(f"Retrieved {len(series_data['values'])} monthly data points")
     logger.info(f"Date range: {series_data['dates'][0]} to {series_data['dates'][-1]}")
-import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from typing import Optional
@@ -176,7 +175,6 @@ model_uri = train_arima_model(sample_features, 'CAL-ALL')
 from lightgbm import LGBMRegressor
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_squared_error
-import numpy as np
 
 def train_lightgbm_model(df: pd.DataFrame, ba: str) -> Optional[str]:
     """Train LightGBM advanced model.
