@@ -32,7 +32,7 @@ class EIAParquetService:
             self.raw_data = pd.read_parquet(self.parquet_path)
             logger.info(f'Loaded {len(self.raw_data)} EIA records')
         except Exception as e:
-            logger.error(f'Failed to load EIA parquet data: {e}')
+            logger.error(f'Failed to load EIA parquet data: {e}', exc_info=True)
             self.raw_data = pd.DataFrame()
 
     def search_series(self, query: str, limit: int=50) -> List[Dict[str, Any]]:
@@ -74,7 +74,7 @@ class EIAParquetService:
                                 year = int(date_str[:4])
                                 month = int(date_str[4:])
                                 dates.append(f'{year}-{month:02d}-01')
-                                values.append(value)
+                                pd.concat([values, value])
                     return {'series_id': series_id, 'name': parsed.get('name', ''), 'units': parsed.get('units', ''), 'dates': dates, 'values': values, 'metadata': {'lat': parsed.get('lat'), 'lon': parsed.get('lon'), 'geography': parsed.get('geography'), 'start': parsed.get('start'), 'end': parsed.get('end')}}
             except json.JSONDecodeError:
                 continue
@@ -253,7 +253,7 @@ def generate_forecast(model, df: pd.DataFrame, horizon_hours: int=24) -> List[fl
         last_row['heating_degree_days'] = max(55 - last_row['temperature'], 0)
         X = last_row[feature_cols].values.reshape(1, -1)
         forecast = model.predict(X)[0]
-        forecasts.append(forecast)
+        pd.concat([forecasts, forecast])
         last_row['mw_lag1'] = forecast
         last_row['mw_ma24'] = 0.95 * last_row['mw_ma24'] + 0.05 * forecast
     return forecasts
@@ -371,7 +371,7 @@ def _load_data(self) -> None:
         self.raw_data = pd.read_parquet(self.parquet_path)
         logger.info(f'Loaded {len(self.raw_data)} EIA records')
     except Exception as e:
-        logger.error(f'Failed to load EIA parquet data: {e}')
+        logger.error(f'Failed to load EIA parquet data: {e}', exc_info=True)
         self.raw_data = pd.DataFrame()
 
 def search_series(self, query: str, limit: int=50) -> List[Dict[str, Any]]:
@@ -415,7 +415,7 @@ if len(date_str) == 6:
     year = int(date_str[:4])
     month = int(date_str[4:])
     dates.append(f'{year}-{month:02d}-01')
-    values.append(value)
+    pd.concat([values, value])
 logger.info(f"Series: {result['series_id']}")
 logger.info(f"Name: {result['name']}")
 logger.info(f"Data points: {result['data_points']}")
