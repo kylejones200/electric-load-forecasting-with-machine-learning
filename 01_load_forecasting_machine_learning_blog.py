@@ -93,7 +93,7 @@ class EIAParquetService:
                                 year = int(date_str[:4])
                                 month = int(date_str[4:])
                                 dates.append(f"{year}-{month:02d}-01")
-                                pd.concat([values, value])
+                                values.append(value)
                     return {
                         "series_id": series_id,
                         "name": parsed.get("name", ""),
@@ -377,7 +377,7 @@ def generate_forecast(model, df: pd.DataFrame, horizon_hours: int = 24) -> list[
         last_row["heating_degree_days"] = max(55 - last_row["temperature"], 0)
         X = last_row[feature_cols].values.reshape(1, -1)
         forecast = model.predict(X)[0]
-        pd.concat([forecasts, forecast])
+        forecasts.append(forecast)
         last_row["mw_lag1"] = forecast
         last_row["mw_ma24"] = 0.95 * last_row["mw_ma24"] + 0.05 * forecast
     return forecasts
@@ -580,7 +580,7 @@ if len(date_str) == 6:
     year = int(date_str[:4])
     month = int(date_str[4:])
     dates.append(f"{year}-{month:02d}-01")
-    pd.concat([values, value])
+    values.append(value)
 logger.info(f"Series: {result['series_id']}")
 logger.info(f"Name: {result['name']}")
 logger.info(f"Data points: {result['data_points']}")
