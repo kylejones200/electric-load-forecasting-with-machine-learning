@@ -20,7 +20,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class EIAParquetService:
     """Service for handling the massive EIA electricity parquet dataset."""
 
@@ -112,7 +111,6 @@ class EIAParquetService:
                 continue
         return {}
 
-
 eia_service = EIAParquetService("ELEC.parquet")
 results = eia_service.search_series("generation CAL", limit=10)
 for result in results:
@@ -127,7 +125,6 @@ if results:
 from datetime import datetime, timedelta
 
 import numpy as np
-
 
 def prepare_features(load_data: pd.DataFrame, lookback_days: int = 90) -> pd.DataFrame:
     """Prepare feature dataset for modeling.
@@ -168,7 +165,6 @@ def prepare_features(load_data: pd.DataFrame, lookback_days: int = 90) -> pd.Dat
     df["is_holiday"] = 0
     return df
 
-
 sample_data = pd.DataFrame(
     {
         "ts_utc": pd.date_range("2024-01-01", periods=24 * 90, freq="H"),
@@ -184,7 +180,6 @@ import mlflow
 import mlflow.sklearn
 from pmdarima import auto_arima
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
-
 
 def train_arima_model(df: pd.DataFrame, ba: str) -> str | None:
     """Train auto_arima baseline model.
@@ -236,13 +231,11 @@ def train_arima_model(df: pd.DataFrame, ba: str) -> str | None:
         logger.info(f"ARIMA model trained: MAPE={mape:.4f}, Order={model.order}")
         return model_info.model_uri
 
-
 sample_features = prepare_features(sample_data)
 model_uri = train_arima_model(sample_features, "CAL-ALL")
 from lightgbm import LGBMRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
-
 
 def train_lightgbm_model(df: pd.DataFrame, ba: str) -> str | None:
     """Train LightGBM advanced model.
@@ -319,9 +312,7 @@ def train_lightgbm_model(df: pd.DataFrame, ba: str) -> str | None:
         logger.info(importance_df.head())
         return model_info.model_uri
 
-
 model_uri_lgbm = train_lightgbm_model(sample_features, "CAL-ALL")
-
 
 def generate_forecast(model, df: pd.DataFrame, horizon_hours: int = 24) -> list[float]:
     """Generate multi-hour forecast using trained model.
@@ -382,12 +373,10 @@ def generate_forecast(model, df: pd.DataFrame, horizon_hours: int = 24) -> list[
         last_row["mw_ma24"] = 0.95 * last_row["mw_ma24"] + 0.05 * forecast
     return forecasts
 
-
 forecasts_48h = generate_forecast(model, sample_features, horizon_hours=48)
 logger.info("48-Hour Load Forecast:")
 for i, forecast in enumerate(forecasts_48h):
     logger.info(f"Hour {i + 1}: {forecast:,.0f} MW")
-
 
 def apply_scenario(df: pd.DataFrame, scenario_id: str) -> pd.DataFrame:
     """Apply scenario adjustments to feature DataFrame.
@@ -423,7 +412,6 @@ def apply_scenario(df: pd.DataFrame, scenario_id: str) -> pd.DataFrame:
         scenario_df["mw_ma24"] *= 0.85
     return scenario_df
 
-
 scenarios = ["baseline", "hot_weather", "high_growth", "demand_response"]
 scenario_forecasts = {}
 for scenario in scenarios:
@@ -443,7 +431,6 @@ for scenario in scenarios[1:]:
     scenario_peak = scenario_forecasts[scenario][17]
     diff_pct = (scenario_peak / baseline_peak - 1) * 100
     logger.info(f"  {scenario} vs baseline: {diff_pct:+.1f}%")
-
 
 class OutageImpactAnalyzer:
     """Analyze how outages affect load forecasts."""
@@ -501,9 +488,7 @@ class OutageImpactAnalyzer:
             adjusted_forecast.append(forecast_value * adjustment)
         return adjusted_forecast
 
-
 "Service for handling the massive EIA electricity parquet dataset."
-
 
 def __init__(self, parquet_path: str = "ELEC.parquet"):
     """Initialize EIA parquet service.
@@ -515,7 +500,6 @@ def __init__(self, parquet_path: str = "ELEC.parquet"):
     self.raw_data = None
     self._load_data()
 
-
 def _load_data(self) -> None:
     """Load and parse the EIA parquet data."""
     try:
@@ -526,13 +510,11 @@ def _load_data(self) -> None:
         logger.error(f"Failed to load EIA parquet data: {e}", exc_info=True)
         self.raw_data = pd.DataFrame()
 
-
 def search_series(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
     """Search for series matching a query."""
     if self.raw_data is None or self.raw_data.empty:
         return []
     self.raw_data.columns[0]
-
 
 for i, row in self.raw_data.iterrows():
     if len(results) >= limit:
@@ -555,7 +537,6 @@ for i, row in self.raw_data.iterrows():
         except json.JSONDecodeError:
             continue
 
-
 def get_time_series_data(self, series_id: str) -> dict[str, Any]:
     """Get complete time series data for a specific series."""
     if self.raw_data is None or self.raw_data.empty:
@@ -574,7 +555,6 @@ def get_time_series_data(self, series_id: str) -> dict[str, Any]:
                     if len(point) >= 2:
                         point[0]
                         point[1]
-
 
 if len(date_str) == 6:
     year = int(date_str[:4])
@@ -728,11 +708,6 @@ diff_pct = (scenario_peak / baseline_peak - 1) * 100
 logger.info(f"  {scenario} vs baseline: {diff_pct:+.1f}%")
 "Analyze how outages affect load forecasts."
 
-
-def __init__(self, outage_service):
-    self.outage_service = outage_service
-
-
 def get_outage_adjustment_factor(self, state: str, timestamp: datetime) -> float:
     """Calculate load adjustment factor based on current outages.
 
@@ -744,11 +719,9 @@ def get_outage_adjustment_factor(self, state: str, timestamp: datetime) -> float
         Adjustment factor (1.0 = no adjustment, 0.9 = 10% reduction)
     """
 
-
 year = timestamp.year
 total_customers_out = sum(r["customers_out"] for r in outage_data)
 adjustment_factor = 1.0 - outage_rate * 0.8
-
 
 def adjust_forecast_for_outages(
     self, forecast: list[float], state: str, base_time: datetime
