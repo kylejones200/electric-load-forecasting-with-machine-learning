@@ -49,7 +49,8 @@ class EIAParquetService:
             return []
         results = []
         column_name = self.raw_data.columns[0]
-        for i, row in self.raw_data.iterrows():
+        for row in self.raw_data.itertuples():
+            i = row.Index
             if len(results) >= limit:
                 break
             json_str = row[column_name]
@@ -76,7 +77,8 @@ class EIAParquetService:
         if self.raw_data is None or self.raw_data.empty:
             return {}
         column_name = self.raw_data.columns[0]
-        for i, row in self.raw_data.iterrows():
+        for row in self.raw_data.itertuples():
+            i = row.Index
             json_str = row[column_name]
             try:
                 parsed = json.loads(json_str)
@@ -516,7 +518,8 @@ def search_series(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         return []
     self.raw_data.columns[0]
 
-for i, row in self.raw_data.iterrows():
+for row in self.raw_data.itertuples():
+    i = row.Index
     if len(results) >= limit:
         break
     json_str = row[column_name]
@@ -542,7 +545,8 @@ def get_time_series_data(self, series_id: str) -> dict[str, Any]:
     if self.raw_data is None or self.raw_data.empty:
         return {}
     column_name = self.raw_data.columns[0]
-    for i, row in self.raw_data.iterrows():
+    for row in self.raw_data.itertuples():
+        i = row.Index
         json_str = row[column_name]
         try:
             pass
