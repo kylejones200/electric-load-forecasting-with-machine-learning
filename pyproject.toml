@@ -5,6 +5,8 @@ description = "Companion code for Medium article: electric load forecasting with
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "pydantic>=2.10.0",
+    "pytest>=8.0",
     "lightgbm>=4.5.0",
     "mlflow>=2.20.0",
     "numpy>=2.4.4",
@@ -22,3 +24,7 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

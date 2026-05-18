@@ -8,9 +8,17 @@ You may need to adjust imports and add necessary dependencies.
 import json
 import logging
 import sys
+from datetime import datetime, timedelta
 from typing import Any
 
+import mlflow
+import mlflow.sklearn
+import numpy as np
 import pandas as pd
+from lightgbm import LGBMRegressor
+from pmdarima import auto_arima
+from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, mean_squared_error
+from sklearn.model_selection import TimeSeriesSplit
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,12 +28,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class EIAParquetService:
     """Service for handling the massive EIA electricity parquet dataset."""
 
     def __init__(self, parquet_path: str = "ELEC.parquet"):
         """Initialize EIA parquet service.
-
         Args:
             parquet_path: Path to the ELEC.parquet file.
         """
@@ -50,7 +58,6 @@ class EIAParquetService:
         results = []
         column_name = self.raw_data.columns[0]
         for row in self.raw_data.itertuples():
-            i = row.Index
             if len(results) >= limit:
                 break
             json_str = row[column_name]
@@ -78,7 +85,6 @@ class EIAParquetService:
             return {}
         column_name = self.raw_data.columns[0]
         for row in self.raw_data.itertuples():
-            i = row.Index
             json_str = row[column_name]
             try:
                 parsed = json.loads(json_str)
@@ -113,6 +119,7 @@ class EIAParquetService:
                 continue
         return {}
 
+
 eia_service = EIAParquetService("ELEC.parquet")
 results = eia_service.search_series("generation CAL", limit=10)
 for result in results:
@@ -124,13 +131,11 @@ if results:
     series_data = eia_service.get_time_series_data(results[0]["series_id"])
     logger.info(f"Retrieved {len(series_data['values'])} monthly data points")
     logger.info(f"Date range: {series_data['dates'][0]} to {series_data['dates'][-1]}")
-from datetime import datetime, timedelta
 
-import numpy as np
+
 
 def prepare_features(load_data: pd.DataFrame, lookback_days: int = 90) -> pd.DataFrame:
     """Prepare feature dataset for modeling.
-
     Args:
         load_data: DataFrame with columns [ts_utc, mw, ba]
         lookback_days: Number of days of historical data to use.
@@ -167,6 +172,7 @@ def prepare_features(load_data: pd.DataFrame, lookback_days: int = 90) -> pd.Dat
     df["is_holiday"] = 0
     return df
 
+
 sample_data = pd.DataFrame(
     {
         "ts_utc": pd.date_range("2024-01-01", periods=24 * 90, freq="H"),
@@ -178,14 +184,10 @@ features_df = prepare_features(sample_data)
 logger.info(f"Original columns: {len(sample_data.columns)}")
 logger.info(f"Feature columns: {len(features_df.columns)}")
 logger.info(f"\nNew features: {list(features_df.columns[3:])}")
-import mlflow
-import mlflow.sklearn
-from pmdarima import auto_arima
-from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error
+
 
 def train_arima_model(df: pd.DataFrame, ba: str) -> str | None:
     """Train auto_arima baseline model.
-
     Args:
         df: Feature DataFrame.
         ba: Balancing authority code.
@@ -233,15 +235,13 @@ def train_arima_model(df: pd.DataFrame, ba: str) -> str | None:
         logger.info(f"ARIMA model trained: MAPE={mape:.4f}, Order={model.order}")
         return model_info.model_uri
 
+
 sample_features = prepare_features(sample_data)
 model_uri = train_arima_model(sample_features, "CAL-ALL")
-from lightgbm import LGBMRegressor
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import TimeSeriesSplit
+
 
 def train_lightgbm_model(df: pd.DataFrame, ba: str) -> str | None:
     """Train LightGBM advanced model.
-
     Args:
         df: Feature DataFrame.
         ba: Balancing authority code.
@@ -314,11 +314,12 @@ def train_lightgbm_model(df: pd.DataFrame, ba: str) -> str | None:
         logger.info(importance_df.head())
         return model_info.model_uri
 
+
 model_uri_lgbm = train_lightgbm_model(sample_features, "CAL-ALL")
+
 
 def generate_forecast(model, df: pd.DataFrame, horizon_hours: int = 24) -> list[float]:
     """Generate multi-hour forecast using trained model.
-
     Args:
         model: Trained LightGBM model.
         df: Historical data with features.
@@ -361,9 +362,7 @@ def generate_forecast(model, df: pd.DataFrame, horizon_hours: int = 24) -> list[
         last_row["month"] = future_time.month
         last_row["is_weekend"] = int(last_row["dow"] >= 6)
         last_row["temperature"] = (
-            70
-            + 20 * np.sin(2 * np.pi * day_of_year / 365.25)
-            + 10 * np.sin(2 * np.pi * hour / 24)
+            70 + 20 * np.sin(2 * np.pi * day_of_year / 365.25) + 10 * np.sin(2 * np.pi * hour / 24)
         )
         last_row["temp_squared"] = last_row["temperature"] ** 2
         last_row["cooling_degree_days"] = max(last_row["temperature"] - 65, 0)
@@ -375,14 +374,15 @@ def generate_forecast(model, df: pd.DataFrame, horizon_hours: int = 24) -> list[
         last_row["mw_ma24"] = 0.95 * last_row["mw_ma24"] + 0.05 * forecast
     return forecasts
 
+
 forecasts_48h = generate_forecast(model, sample_features, horizon_hours=48)
 logger.info("48-Hour Load Forecast:")
 for i, forecast in enumerate(forecasts_48h):
     logger.info(f"Hour {i + 1}: {forecast:,.0f} MW")
 
+
 def apply_scenario(df: pd.DataFrame, scenario_id: str) -> pd.DataFrame:
     """Apply scenario adjustments to feature DataFrame.
-
     Args:
         df: Base features DataFrame.
         scenario_id: Scenario identifier.
@@ -394,12 +394,8 @@ def apply_scenario(df: pd.DataFrame, scenario_id: str) -> pd.DataFrame:
     if scenario_id == "hot_weather":
         scenario_df["temperature"] += 15
         scenario_df["temp_squared"] = scenario_df["temperature"] ** 2
-        scenario_df["cooling_degree_days"] = np.maximum(
-            scenario_df["temperature"] - 65, 0
-        )
-        scenario_df["heating_degree_days"] = np.maximum(
-            55 - scenario_df["temperature"], 0
-        )
+        scenario_df["cooling_degree_days"] = np.maximum(scenario_df["temperature"] - 65, 0)
+        scenario_df["heating_degree_days"] = np.maximum(55 - scenario_df["temperature"], 0)
     elif scenario_id == "high_growth":
         lag_cols = ["mw_lag1", "mw_lag24", "mw_lag168", "mw_ma24", "mw_ma168"]
         for col in lag_cols:
@@ -413,6 +409,7 @@ def apply_scenario(df: pd.DataFrame, scenario_id: str) -> pd.DataFrame:
         scenario_df["mw_lag1"] *= 0.8
         scenario_df["mw_ma24"] *= 0.85
     return scenario_df
+
 
 scenarios = ["baseline", "hot_weather", "high_growth", "demand_response"]
 scenario_forecasts = {}
@@ -434,6 +431,7 @@ for scenario in scenarios[1:]:
     diff_pct = (scenario_peak / baseline_peak - 1) * 100
     logger.info(f"  {scenario} vs baseline: {diff_pct:+.1f}%")
 
+
 class OutageImpactAnalyzer:
     """Analyze how outages affect load forecasts."""
 
@@ -442,7 +440,6 @@ class OutageImpactAnalyzer:
 
     def get_outage_adjustment_factor(self, state: str, timestamp: datetime) -> float:
         """Calculate load adjustment factor based on current outages.
-
         Args:
             state: State code (e.g., 'Texas')
             timestamp: Current timestamp
@@ -474,7 +471,6 @@ class OutageImpactAnalyzer:
         self, forecast: list[float], state: str, base_time: datetime
     ) -> list[float]:
         """Adjust forecast based on expected or ongoing outages.
-
         Args:
             forecast: Base forecast values
             state: State code
@@ -489,5 +485,3 @@ class OutageImpactAnalyzer:
             adjustment = self.get_outage_adjustment_factor(state, forecast_time)
             adjusted_forecast.append(forecast_value * adjustment)
         return adjusted_forecast
-
-
