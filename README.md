@@ -20,6 +20,31 @@ The original article export is saved as `article.md`.
 
 Add your `.ipynb`, `.py`, `.yaml`, `.js`, `.ts`, or other project files here.
 
+## Rust performance port
+
+Side-by-side **Python vs Rust** implementation of the numeric hot loop — cyclical time features (sin/cos hour and day). Reference PyO3 benchmark: **comparable (see `benchmark_rust.py`)** on a release build (local machine; run `benchmark_rust.py` to reproduce).
+
+| Path | Role |
+|------|------|
+| `src/compute_kernel.py` | Python/numpy reference kernel |
+| `rust/core/` | Pure Rust library |
+| `rust/py/` | PyO3 bindings |
+| `rust/bench/` | Standalone CLI benchmark |
+| `benchmark_rust.py` | Python vs Rust timing + correctness check |
+
+```bash
+# Rust-only CLI benchmark
+cd rust && cargo run --release -p electric_load_forecasting_with_machine_learning_bench
+
+# Python vs Rust (PyO3)
+pip install maturin numpy
+maturin develop --release -m rust/py/Cargo.toml
+python benchmark_rust.py
+```
+
+Python ML training, solvers, and orchestration stay in Python; Rust targets the numeric hot loops. Stochastic generators validate output shapes; deterministic kernels match at tight floating-point tolerance.
+
+
 ## Disclaimer
 
 Educational/demo code only. Not financial, safety, or engineering advice. Use at your own risk. Verify results independently before any production or operational use.
