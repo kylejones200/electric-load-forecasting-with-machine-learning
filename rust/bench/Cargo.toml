@@ -1,0 +1,13 @@
+[package]
+name = "electric_load_forecasting_with_machine_learning_bench"
+description = "Standalone Rust benchmark (no Python)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "bench"
+path = "src/main.rs"
+
+[dependencies]
+electric_load_forecasting_with_machine_learning_core = { path = "../core" }

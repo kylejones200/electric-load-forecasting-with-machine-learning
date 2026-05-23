@@ -1,0 +1,9 @@
+[package]
+name = "electric_load_forecasting_with_machine_learning_core"
+description = "Cyclical time features"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+path = "src/lib.rs"

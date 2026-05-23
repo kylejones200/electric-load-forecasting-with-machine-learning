@@ -1,0 +1,15 @@
+[package]
+name = "electric_load_forecasting_with_machine_learning_rs"
+description = "Python bindings (PyO3) for electric_load_forecasting_with_machine_learning_core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "electric_load_forecasting_with_machine_learning_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+electric_load_forecasting_with_machine_learning_core = { path = "../core" }
+pyo3 = { version = "0.28", features = ["extension-module"] }
+numpy = "0.28"
