@@ -11,14 +11,7 @@ Modern load forecasting combines time-honored statistical methods with cutting-e
 
 This project shows how to build a load forecasting system from scratch, using EIA generation data.
 
-## About
 
-Place the code for this article in this repository.
-The original article export is saved as `article.md`.
-
-## Files
-
-Add your `.ipynb`, `.py`, `.yaml`, `.js`, `.ts`, or other project files here.
 
 ## Rust performance port
 
